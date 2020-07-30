@@ -35,13 +35,17 @@ public class SimpleSessionExecutor implements SessionExecutor {
     public void execute(BufferedReader reader, BufferedWriter writer) throws IOException {
         final UserDto userDto = objectMapper.readValue(reader.readLine(), UserDto.class);
         final UserEntity user = simpleUserService.put(userDto);
+        boolean hasGameContinuing = true;
 
-        while (!Thread.currentThread().isInterrupted()) {
+        while (hasGameContinuing) {
             final MessageDto messageDto = objectMapper.readValue(reader.readLine(), MessageDto.class);
-            // todo может сделать чтоб до игры снимлись деньг
             try {
                 final int balance = simpleUserService.getById(user.getId()).getBalance();
-                if (balance <= 0 || messageDto.getBetValue() > balance) {
+                if (balance <= 0) {
+                    hasGameContinuing = false;
+                    throw new NotEnoughBalanceException("Balance is 0, game end");
+                }
+                if (balance < messageDto.getBetValue()) {
                     throw new NotEnoughBalanceException(balance);
                 }
                 final GambleGame gambleEvent = gameResolver.resolve(messageDto);

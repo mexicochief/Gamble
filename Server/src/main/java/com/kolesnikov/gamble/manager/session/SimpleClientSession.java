@@ -19,7 +19,7 @@ public class SimpleClientSession implements ClientSession {
             sessionExecutor.execute(reader, writer);
         } catch (
                 IOException e) {
-            System.out.println(e.getMessage());// todo соеденение не прерывается, когда пользователь отключается
+            System.out.println(e.getMessage());
         }
     }
 }
