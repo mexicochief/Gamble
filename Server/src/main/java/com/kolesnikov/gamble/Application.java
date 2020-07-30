@@ -32,13 +32,19 @@ public class Application {
         try (InputStream inputStream =
                      Application.class.getClassLoader().getResourceAsStream("server.properties")) {
             properties.load(inputStream);
-            serverSocket = new ServerSocket(4005);// todo засунуть в .property
+            final String port = properties.getProperty("port");
+            serverSocket = new ServerSocket(Integer.parseInt(port));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
 
         ExecutorService threadPool = Executors.newCachedThreadPool();
-        DataSource dataSource = new HikariDataSource(new HikariConfig(properties));
+
+        final HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(properties.getProperty("jdbcUrl"));
+        hikariConfig.setMaximumPoolSize(Integer.parseInt(properties.getProperty("maximumPoolSize")));
+
+        DataSource dataSource = new HikariDataSource(hikariConfig);
         UserDbManager userHistory = new UserDbManager(dataSource);
         BetHistoryDbManager betHistory = new BetHistoryDbManager(dataSource);
         SimpleUserService simpleUserService = new SimpleUserService(userHistory);
@@ -46,7 +52,6 @@ public class Application {
 
         GameResolver gameResolver = new SimpleGameResolver();
         gameResolver.addGambleEvents(new TossCoinGame(0.9));
-
 
         SessionExecutor sessionExecutor = new SimpleSessionExecutor(
                 betHistoryService,
@@ -58,6 +63,5 @@ public class Application {
                 new SimpleClientManager(sessionExecutor);
         GambleServer gambleServer = new GambleServer(serverSocket, threadPool, clientsManager);
         gambleServer.run();
-
     }
 }
