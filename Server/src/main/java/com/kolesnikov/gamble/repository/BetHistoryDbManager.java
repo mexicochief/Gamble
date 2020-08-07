@@ -8,39 +8,20 @@ import java.sql.*;
 public class BetHistoryDbManager {
     private final DataSource dataSource;
 
-    private final String CREATE_QUERY = "CREATE TABLE bets(" +
-            "id bigint auto_increment, " +
-            "bet bigint NOT NULL, " +
-            "balance_change bigint NOT NULL," +
-            "user_id bigint NOT NULL)";
-
-    private final String START_TRANSACTION_QUERY = "BEGIN TRANSACTION";
-    private final String COMMIT_QUERY = "COMMIT";
     private final String PUT_QUERY = "INSERT INTO bets(bet, balance_change, user_id) VALUES(?,?,?)";
-    private final String UPDATE_BALANCE_QUERY = "UPDATE user SET balance = balance + ? " +
+    private final String UPDATE_BALANCE_QUERY = "UPDATE users SET balance = balance + ? " +
             "WHERE id = ?";
     private final String GET_QUERY = "SELECT * from bets where user_id = ?";
 
     public BetHistoryDbManager(DataSource dataSource) {
         this.dataSource = dataSource;
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
-            statement.execute(CREATE_QUERY);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
     }
 
-    public BetEntity put(BetEntity betEntity) {
+    public synchronized BetEntity put(BetEntity betEntity) {
         try (Connection connection = dataSource.getConnection();
-             Statement startTransactionStatement = connection.createStatement();
              PreparedStatement put = connection.prepareStatement(PUT_QUERY, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement update = connection.prepareStatement(UPDATE_BALANCE_QUERY);
-             Statement commitStatement = connection.createStatement();) {
+             PreparedStatement update = connection.prepareStatement(UPDATE_BALANCE_QUERY)) {
             connection.setAutoCommit(false);
-
-
-//            startTransactionStatement.execute(START_TRANSACTION_QUERY);
 
             put.setLong(1, betEntity.getBet());
             put.setLong(2, betEntity.getChangeOfBalance());
@@ -51,8 +32,7 @@ public class BetHistoryDbManager {
             update.setLong(2, betEntity.getUserId());
             update.executeUpdate();
             connection.commit();
-
-//            commitStatement.execute(COMMIT_QUERY);
+            connection.setAutoCommit(true);
 
             final ResultSet generatedKeys = put.getGeneratedKeys();
             if (!generatedKeys.next()) {
@@ -71,7 +51,7 @@ public class BetHistoryDbManager {
         }
     }
 
-    public BetEntity get(long id) {
+    public synchronized BetEntity get(long id) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_QUERY)) {
 

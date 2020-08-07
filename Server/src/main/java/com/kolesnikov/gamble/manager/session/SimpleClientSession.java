@@ -20,6 +20,15 @@ public class SimpleClientSession implements ClientSession {
         } catch (
                 IOException e) {
             System.out.println(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();//todo убрать
+        } finally {
+            try {
+                userSocket.close();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         }
+
     }
 }

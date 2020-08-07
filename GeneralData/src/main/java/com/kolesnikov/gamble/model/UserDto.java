@@ -2,12 +2,12 @@ package com.kolesnikov.gamble.model;
 
 public class UserDto {
     private  String name;
-    private  int id;
+    private  long id;
 
     public UserDto() {
     }
 
-    public UserDto(String name, int id) {
+    public UserDto(String name, long id) {
         this.name = name;
         this.id = id;
     }
@@ -16,7 +16,7 @@ public class UserDto {
         return name;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

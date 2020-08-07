@@ -16,7 +16,6 @@ import com.kolesnikov.gamble.service.SimpleUserService;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -24,14 +23,14 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Application {
+public class ServerApplication {
     public static void main(String[] args) {
 
         Properties properties = new Properties();
         ServerSocket serverSocket = null;
         try (InputStream inputStream =
-                     Application.class.getClassLoader().getResourceAsStream("server.properties")) {
-            properties.load(inputStream);
+                     ServerApplication.class.getClassLoader().getResourceAsStream("server.properties")) {
+            properties.load(inputStream);// todo может что-то сделать
             final String port = properties.getProperty("port");
             serverSocket = new ServerSocket(Integer.parseInt(port));
         } catch (IOException e) {
@@ -44,7 +43,7 @@ public class Application {
         hikariConfig.setJdbcUrl(properties.getProperty("jdbcUrl"));
         hikariConfig.setMaximumPoolSize(Integer.parseInt(properties.getProperty("maximumPoolSize")));
 
-        DataSource dataSource = new HikariDataSource(hikariConfig);
+        HikariDataSource dataSource = new HikariDataSource(hikariConfig);
         UserDbManager userHistory = new UserDbManager(dataSource);
         BetHistoryDbManager betHistory = new BetHistoryDbManager(dataSource);
         SimpleUserService simpleUserService = new SimpleUserService(userHistory);
@@ -59,8 +58,7 @@ public class Application {
                 new ObjectMapper(),
                 gameResolver);
 
-        ClientsManager clientsManager =
-                new SimpleClientManager(sessionExecutor);
+        ClientsManager clientsManager = new SimpleClientManager(sessionExecutor);
         GambleServer gambleServer = new GambleServer(serverSocket, threadPool, clientsManager);
         gambleServer.run();
     }
