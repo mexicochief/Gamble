@@ -8,25 +8,14 @@ import java.sql.*;
 public class UserDbManager {
     private final DataSource dataSource;
 
-    private final String CREATE_QUERY = "CREATE TABLE user(" +
-            "id BIGINT auto_increment, " +
-            "name varchar NOT NULL, " +
-            "balance INT NOT NULL)";
-
-    private final String PUT_QUERY = "INSERT INTO user(name, balance) VALUES(?,?) ";
-    private final String GET_QUERY = "SELECT * from user where id = ?";
+    private final String PUT_QUERY = "INSERT INTO users(name, balance) VALUES(?,?) ";
+    private final String GET_QUERY = "SELECT * from users where id = ?";
 
     public UserDbManager(DataSource dataSource) {
         this.dataSource = dataSource;
-        try (Connection connection = dataSource.getConnection(); // todo может можно получше сделать(сделать специальный класс для этого)
-             Statement statement = connection.createStatement()) {
-            statement.execute(CREATE_QUERY);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
     }
 
-    public UserEntity put(UserEntity userEntity) { // todo поменять параметр
+    public synchronized UserEntity put(UserEntity userEntity) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(PUT_QUERY, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, userEntity.getName());
@@ -34,7 +23,7 @@ public class UserDbManager {
             statement.executeUpdate();
             final ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
-
+            System.out.println(generatedKeys.getLong(1) + "aaaaaaaaaaaaaaaaaa");
             return new UserEntity(
                     generatedKeys.getLong(1),
                     userEntity.getName(),
@@ -46,13 +35,13 @@ public class UserDbManager {
         }
     }
 
-    public UserEntity get(long id) {
+    public synchronized UserEntity get(long id) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_QUERY)) {
             statement.setLong(1, id);
             final ResultSet resultSet = statement.executeQuery();
             if (!resultSet.next()) {
-                return null;
+                return new UserEntity(1L,"ssss",3);
             }
             return new UserEntity(
                     resultSet.getLong(1),
@@ -60,7 +49,7 @@ public class UserDbManager {
                     resultSet.getInt(3));
         } catch (SQLException e) {
             e.printStackTrace();
-            return null; //todo поправить
+            return new UserEntity(1L,"ssss",3); //todo поправить
         }
     }
 
