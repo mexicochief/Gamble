@@ -1,21 +1,21 @@
 package com.kolesnikov.gamble.manager;
 
-import com.kolesnikov.gamble.manager.session.ClientSession;
-import com.kolesnikov.gamble.manager.session.SessionExecutor;
-import com.kolesnikov.gamble.manager.session.SimpleClientSession;
+import com.kolesnikov.gamble.manager.session.ClientRunner;
+import com.kolesnikov.gamble.manager.session.Session;
+import com.kolesnikov.gamble.manager.session.SimpleClientRunner;
 
 import java.net.Socket;
 
 public class SimpleClientManager implements ClientsManager {
-    private final SessionExecutor sessionExecutor;
+    private final Session sessionExecutor;
 
 
-    public SimpleClientManager(SessionExecutor sessionExecutor) {
+    public SimpleClientManager(Session sessionExecutor) {
         this.sessionExecutor = sessionExecutor;
     }
 
-    public ClientSession createSession(Socket socket) {
+    public ClientRunner createSession(Socket socket) {
 
-        return new SimpleClientSession(socket, sessionExecutor);
+        return new SimpleClientRunner(socket, sessionExecutor);
     }
 }

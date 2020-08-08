@@ -1,9 +1,9 @@
 package com.kolesnikov.gamble.manager;
 
-import com.kolesnikov.gamble.manager.session.ClientSession;
+import com.kolesnikov.gamble.manager.session.ClientRunner;
 
 import java.net.Socket;
 
 public interface ClientsManager {
-    ClientSession createSession(Socket socket);
+    ClientRunner createSession(Socket socket);
 }
