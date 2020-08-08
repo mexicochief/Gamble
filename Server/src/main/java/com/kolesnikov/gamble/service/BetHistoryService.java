@@ -1,6 +1,6 @@
 package com.kolesnikov.gamble.service;
 
-import com.kolesnikov.gamble.dto.BetMessageDto;
+import com.kolesnikov.gamble.dto.BetDto;
 import com.kolesnikov.gamble.model.BetEntity;
 import com.kolesnikov.gamble.repository.BetHistoryDbManager;
 
@@ -12,7 +12,7 @@ public class BetHistoryService {
     }
 
 
-    public BetEntity put(BetMessageDto betMessageDto) {
+    public BetEntity put(BetDto betMessageDto) {
         return betHistory.put(new BetEntity(
                 null,
                 betMessageDto.getBet(),

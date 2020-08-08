@@ -1,4 +1,4 @@
 package com.kolesnikov.gamble.manager.session;
 
-public interface ClientSession extends Runnable {
+public interface ClientRunner extends Runnable {
 }

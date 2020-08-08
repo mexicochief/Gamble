@@ -2,13 +2,13 @@ package com.kolesnikov.gamble.dto;
 
 import com.kolesnikov.gamble.game.Outcome;
 
-public class BetMessageDto {
+public class BetDto {
     private final long userId;
     private final Outcome outcome;
     private final long bet;
     private final long changeOfBalance;
 
-    public BetMessageDto(long id, Outcome outcome, long bet, long changeOfBalance) {
+    public BetDto(long id, Outcome outcome, long bet, long changeOfBalance) {
         this.userId = id;
         this.outcome = outcome;
         this.bet = bet;

@@ -6,8 +6,8 @@ import com.kolesnikov.gamble.game.SimpleGameResolver;
 import com.kolesnikov.gamble.game.TossCoinGame;
 import com.kolesnikov.gamble.manager.ClientsManager;
 import com.kolesnikov.gamble.manager.SimpleClientManager;
-import com.kolesnikov.gamble.manager.session.SessionExecutor;
-import com.kolesnikov.gamble.manager.session.SimpleSessionExecutor;
+import com.kolesnikov.gamble.manager.session.Session;
+import com.kolesnikov.gamble.manager.session.SimpleSession;
 import com.kolesnikov.gamble.repository.BetHistoryDbManager;
 import com.kolesnikov.gamble.repository.UserDbManager;
 import com.kolesnikov.gamble.server.GambleServer;
@@ -52,7 +52,7 @@ public class ServerApplication {
         GameResolver gameResolver = new SimpleGameResolver();
         gameResolver.addGambleEvents(new TossCoinGame(0.9));
 
-        SessionExecutor sessionExecutor = new SimpleSessionExecutor(
+        Session sessionExecutor = new SimpleSession(
                 betHistoryService,
                 simpleUserService,
                 new ObjectMapper(),
