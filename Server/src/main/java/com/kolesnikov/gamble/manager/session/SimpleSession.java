@@ -5,6 +5,7 @@ import com.kolesnikov.gamble.dto.BetDto;
 import com.kolesnikov.gamble.dto.GameResult;
 import com.kolesnikov.gamble.exception.GambleReadException;
 import com.kolesnikov.gamble.exception.NotEnoughBalanceException;
+import com.kolesnikov.gamble.exception.service.ServiceException;
 import com.kolesnikov.gamble.game.GambleGame;
 import com.kolesnikov.gamble.game.GameResolver;
 import com.kolesnikov.gamble.model.*;
@@ -33,17 +34,23 @@ public class SimpleSession implements Session {
     }
 
     @Override
-    public void start(BufferedReader reader, BufferedWriter writer) {
+    public void start(BufferedReader reader, BufferedWriter writer) { // todo сделать красивее
         try {
             final Optional<UserDto> userOptional = read(reader, UserDto.class);
             final UserDto userDto = userOptional.orElseThrow(GambleReadException::new);
-            final UserEntity user = simpleUserService.put(userDto);
+            final UserEntity user = simpleUserService
+                    .put(userDto)
+                    .orElseThrow(() -> new ServiceException("User"));
             write(writer, new UserDto(user.getName(), user.getId()));
 
             while (Thread.currentThread().isAlive()) {
                 final Optional<MessageDto> messageOptional = read(reader, MessageDto.class);
                 final MessageDto messageDto = messageOptional.orElseThrow(GambleReadException::new);
-                final int balance = simpleUserService.getById(user.getId()).getBalance();
+
+                int balance = simpleUserService
+                        .getById(user.getId())
+                        .orElseThrow(() -> new ServiceException("User"))
+                        .getBalance();
                 if (balance <= 0) {
                     throw new NotEnoughBalanceException("Balance is 0, game end");
                 }
@@ -53,29 +60,38 @@ public class SimpleSession implements Session {
                             messageDto.getBetValue(),
                             messageDto.getMessageType(),
                             0,
-                            simpleUserService.getById(user.getId()).getBalance(),
+                            balance,
                             "not enough balance"));
                 } else {
                     final GambleGame gambleEvent = gameResolver.resolve(messageDto);
                     final GameResult betResult = gambleEvent.play(messageDto);
 
-                    final BetEntity betEntity = betHistoryService.put(new BetDto(
+                    final BetDto betDto = new BetDto(
                             user.getId(),
                             betResult.getOutcome(),
                             betResult.getBet(),
-                            betResult.getChangeOfBalance()));
+                            betResult.getChangeOfBalance());
+
+                    final BetEntity betEntity = betHistoryService
+                            .put(betDto)
+                            .orElseThrow(() -> new ServiceException("Bet"));
+
+                    balance = simpleUserService
+                            .getById(user.getId())
+                            .orElseThrow(() -> new ServiceException("User"))
+                            .getBalance();
 
                     final ResponseMessageDto responseMessageDto = new ResponseMessageDto(
                             user.getId(),
                             betEntity.getBet(),
                             messageDto.getMessageType(),
                             betEntity.getChangeOfBalance(),
-                            simpleUserService.getById(user.getId()).getBalance(), // todo лучше сделать красивее
+                            balance,
                             betResult.getOutcome().toString());
                     write(writer, responseMessageDto);
                 }
             }
-        } catch (NotEnoughBalanceException | IOException e) {
+        } catch (NotEnoughBalanceException | IOException | ServiceException e) {
             System.out.println("cause: " + e.getCause() + ", message: " + e.getMessage());
         }
     }

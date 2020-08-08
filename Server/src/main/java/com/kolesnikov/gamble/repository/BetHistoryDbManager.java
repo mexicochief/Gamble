@@ -1,9 +1,11 @@
 package com.kolesnikov.gamble.repository;
 
+import com.kolesnikov.gamble.exception.repository.GambleDbException;
 import com.kolesnikov.gamble.model.BetEntity;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.Optional;
 
 public class BetHistoryDbManager {
     private final DataSource dataSource;
@@ -17,7 +19,7 @@ public class BetHistoryDbManager {
         this.dataSource = dataSource;
     }
 
-    public synchronized BetEntity put(BetEntity betEntity) {
+    public synchronized Optional<BetEntity> put(BetEntity betEntity) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement put = connection.prepareStatement(PUT_QUERY, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement update = connection.prepareStatement(UPDATE_BALANCE_QUERY)) {
@@ -36,38 +38,35 @@ public class BetHistoryDbManager {
 
             final ResultSet generatedKeys = put.getGeneratedKeys();
             if (!generatedKeys.next()) {
-                return null;
+                return Optional.empty();
             }
 
-            return new BetEntity(
+            return Optional.of(new BetEntity(
                     generatedKeys.getLong(1),
                     betEntity.getBet(),
                     betEntity.getChangeOfBalance(),
-                    betEntity.getUserId()
-            );
+                    betEntity.getUserId()));
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            return null; // todo нормально обработать
+            throw new GambleDbException(e.getMessage(), e.getCause());
         }
     }
 
-    public synchronized BetEntity get(long id) {
+    public synchronized Optional<BetEntity> get(long id) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_QUERY)) {
 
             statement.setLong(1, id);
             final ResultSet resultSet = statement.executeQuery();
             if (!resultSet.next()) {
-                return null;
+                return Optional.empty();
             }
-            return new BetEntity(
+            return Optional.of(new BetEntity(
                     resultSet.getLong(1),
                     resultSet.getLong(2),
                     resultSet.getLong(3),
-                    resultSet.getLong(4));
+                    resultSet.getLong(4)));
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            return null; //todo поправить
+            throw new GambleDbException(e.getMessage(), e.getCause());
         }
     }
 }

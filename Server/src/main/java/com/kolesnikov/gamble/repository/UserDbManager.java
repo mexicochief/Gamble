@@ -1,9 +1,11 @@
 package com.kolesnikov.gamble.repository;
 
+import com.kolesnikov.gamble.exception.repository.GambleDbException;
 import com.kolesnikov.gamble.model.UserEntity;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.Optional;
 
 public class UserDbManager {
     private final DataSource dataSource;
@@ -15,45 +17,40 @@ public class UserDbManager {
         this.dataSource = dataSource;
     }
 
-    public synchronized UserEntity put(UserEntity userEntity) {
+    public synchronized Optional<UserEntity> put(UserEntity userEntity) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(PUT_QUERY, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, userEntity.getName());
             statement.setInt(2, userEntity.getBalance());
             statement.executeUpdate();
             final ResultSet generatedKeys = statement.getGeneratedKeys();
-            generatedKeys.next();
-            System.out.println(generatedKeys.getLong(1) + "aaaaaaaaaaaaaaaaaa");
-            return new UserEntity(
+            if (!generatedKeys.next()) {
+                return Optional.empty();
+            }
+            return Optional.of(new UserEntity(
                     generatedKeys.getLong(1),
                     userEntity.getName(),
                     userEntity.getBalance()
-            );
+            ));
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            return null; // todo нормально обработать
+            throw new GambleDbException(e.getMessage(), e.getCause());
         }
     }
 
-    public synchronized UserEntity get(long id) {
+    public synchronized Optional<UserEntity> get(long id) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_QUERY)) {
             statement.setLong(1, id);
             final ResultSet resultSet = statement.executeQuery();
             if (!resultSet.next()) {
-                return new UserEntity(1L,"ssss",3);
+                return Optional.empty();
             }
-            return new UserEntity(
+            return Optional.of(new UserEntity(
                     resultSet.getLong(1),
                     resultSet.getString(2),
-                    resultSet.getInt(3));
+                    resultSet.getInt(3)));
         } catch (SQLException e) {
-            e.printStackTrace();
-            return new UserEntity(1L,"ssss",3); //todo поправить
+            throw new GambleDbException(e.getMessage(), e.getCause());
         }
     }
-
-//    public UserEntity update(UserEntity userEntity) {
-//
-//    }
 }
